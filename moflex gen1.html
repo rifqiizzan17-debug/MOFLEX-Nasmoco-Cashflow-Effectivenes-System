@@ -1732,7 +1732,25 @@ document.getElementById('w-bucket').value=weights.bucket||15;
 document.getElementById('t-red').value=thresholds.red||70;
 document.getElementById('t-yellow').value=thresholds.yellow||40;
 updateWeightDisplay(); updateThresholdDisplay();
+  function handleLogout(event) {
+  // 1. Mencegah link lompat acak sebelum data dibersihkan
+  event.preventDefault(); 
+  
+  // 2. Hapus memori login di browser biar beneran logout
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("isLoggedIn");
+  
+  // 3. Ambil alamat URL browser saat ini secara dinamis
+  const currentURL = window.location.href;
+  
+  // 4. Arahkan kembali ke file login.html di folder yang sama
+  if (currentURL.includes(".html")) {
+    window.location.href = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/login.html";
+  } else {
+    window.location.href = "./login.html";
+  }
+}
 </script>
-<a href="login.html" class="floating-logout">Exit System</a>
+<a href="#" class="floating-logout" onclick="handleLogout(event)">Exit System</a>
 </body>
 </html>
