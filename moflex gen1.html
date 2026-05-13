@@ -1745,9 +1745,9 @@ updateWeightDisplay(); updateThresholdDisplay();
   
   // 4. Arahkan kembali ke file login.html di folder yang sama
   if (currentURL.includes(".html")) {
-    window.location.href = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/login.html";
+    window.location.href = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/index.html";
   } else {
-    window.location.href = "./login.html";
+    window.location.href = "./index.html";
   }
 }
 </script>
