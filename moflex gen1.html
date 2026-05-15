@@ -1354,6 +1354,8 @@ function renderDashboard(){
   const fVendor=document.getElementById('filter-vendor')?.value||'';
   const fLight=document.getElementById('filter-light')?.value||'';
   const fCat=document.getElementById('filter-cat')?.value||'';
+  setTotalPeng();
+  pengData=pengData.map(d=>({...d,...calcScore(d)}));
 
   const labels=[];
   if(fSAju)labels.push(fSAju);
