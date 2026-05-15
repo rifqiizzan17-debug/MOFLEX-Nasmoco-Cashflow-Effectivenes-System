@@ -1760,19 +1760,27 @@ updateWeightDisplay(); updateThresholdDisplay();
     }
   }
 }
-// TARUH DI SINI, DI LUAR KURUNG MANAPUN
-window.handleLogout = function(event) {
-    event.preventDefault();
-    const currentURL = window.location.href;
-    console.log("Logout dijalankan..."); // Buat ngecek di console
-
-    if (currentURL.includes(".html")) {
-        window.location.href = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/index.html";
-    } else {
-        window.location.href = "./index.html";
-    }
-};
 </script>
-  <a href="#" class="floating-logout" onclick="handleLogout(event)">Exit System</a>
+
+<script>
+    function handleLogout(event) {
+        if (event) event.preventDefault();
+        console.log("Logout System Active...");
+        
+        try {
+            const currentURL = window.location.href;
+            // Jika di URL ada .html, balik ke index.html di folder yang sama
+            const target = currentURL.includes(".html") ? "index.html" : "index.html";
+            const redirectPath = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/" + target;
+            
+            window.location.href = redirectPath;
+        } catch (err) {
+            console.error("Logout Error:", err);
+            window.location.href = "./index.html"; // Fallback jika gagal
+        }
+    }
+</script>
+
+<a href="#" class="floating-logout" onclick="handleLogout(event)">Exit System</a>
 </body>
 </html>
