@@ -721,10 +721,14 @@ function onRateChange(){
 
 function setNominalMax(data){_nominalMax=Math.max(...data.map(d=>d.nominal),1);}
 function setTotalPeng(){
-  // Total pengeluaran = sum dari data aktif (belum executed)
-  _totalPengAktif=pengData.filter(d=>!executedIds.has(d.noEvopay)).reduce((s,d)=>s+d.nominal,0)||1;
+  const fSAju=(document.getElementById('f-status-aju')?.value||'').toUpperCase();
+  const fLunas=document.getElementById('f-lunas')?.value||'';
+  let base=pengData.filter(d=>!executedIds.has(d.noEvopay));
+  if(fSAju)base=base.filter(d=>d.statusAju.toUpperCase()===fSAju);
+  if(fLunas==='belum')base=base.filter(d=>(d.lunas||'').toUpperCase()!=='LUNAS');
+  if(fLunas==='lunas')base=base.filter(d=>(d.lunas||'').toUpperCase()==='LUNAS');
+  _totalPengAktif=base.reduce((s,d)=>s+d.nominal,0)||1;
 }
-
 // ═══════════════════════════════════════════
 // CASH BALANCE
 // ═══════════════════════════════════════════
