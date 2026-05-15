@@ -1759,25 +1759,19 @@ updateWeightDisplay(); updateThresholdDisplay();
     window.location.href = "./index.html";
     }
   }
-}
-</script>
-
 <script>
+  <script>
+    // Fungsi ini dipisah supaya aman dari error kurung di atas
     function handleLogout(event) {
         if (event) event.preventDefault();
         console.log("Logout System Active...");
         
-        try {
-            const currentURL = window.location.href;
-            // Jika di URL ada .html, balik ke index.html di folder yang sama
-            const target = currentURL.includes(".html") ? "index.html" : "index.html";
-            const redirectPath = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/" + target;
-            
-            window.location.href = redirectPath;
-        } catch (err) {
-            console.error("Logout Error:", err);
-            window.location.href = "./index.html"; // Fallback jika gagal
-        }
+        const currentURL = window.location.href;
+        // Arahkan ke index.html
+        const target = currentURL.includes(".html") ? "index.html" : "index.html";
+        const redirectPath = currentURL.substring(0, currentURL.lastIndexOf("/")) + "/" + target;
+        
+        window.location.href = redirectPath;
     }
 </script>
 
