@@ -1705,6 +1705,18 @@ function saveThresholds(){
 // ═══════════════════════════════════════════
 // DEMO
 // ═══════════════════════════════════════════
+  function setApiUrl(url){
+  localStorage.setItem('moflex_api_url',url);
+  location.reload();
+}
+const MOFLEX_API_URL=localStorage.getItem('moflex_api_url')||'';
+async function apiCall(action,payload={}){
+  if(!MOFLEX_API_URL)return{ok:false,message:'API URL belum diset'};
+  try{
+    const res=await fetch(MOFLEX_API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,...payload})});
+    return await res.json();
+  }catch(err){return{ok:false,message:err.toString()};}
+}
 function loadDemo(){
   const H=['No','No Evo Pay','User Aju','Stat. Aju','Tgl Aju','Tgl Tagihan','Lunas/Blm','Voucher Lunas','Tgl Bayar','Metode Byr','Tipe Aju','No. Tagihan','Kode Vendor','Nama Vendor','Beneficiary Account','Nama Bank Penerima','Nama Rekening','Nama Alias','Email Penerima','Nama Bank Pengirim','Transfer Form Account','Real Nominal','NPWP','No.Faktur','Dpp','Ppn','Pos Biaya','Nominal','Pph','Nilai Pph','Total Bayar','Keterangan','Stat Validator','Accept/Reject','Note Sect Head','Note Adh','Note BM','Note OM','Tgl Appv.Accounting','Tgl Appv.Sect Head','Tgl Appv. Adh','Tgl Appv.BM','Status CSV','Departement','Dealer'];
   const now=new Date();
