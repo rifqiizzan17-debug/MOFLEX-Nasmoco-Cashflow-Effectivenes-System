@@ -1088,6 +1088,7 @@ function loadPengFile(file){
     pengData=pengData.map(d=>({...d,...calcScore(d)}));
     renderPengTable(); renderDashboard(); updateHutangStrip();
     setStatus('peng','success',`${file.name} — ${pengData.length} baris dimuat`);
+    savePengToSheets(file.name);
   });
 }
 
@@ -1264,6 +1265,7 @@ function toggleCheck(noEvopay,checked){
   if(checked)checkedIds.add(noEvopay);
   else checkedIds.delete(noEvopay);
   updateExBar();
+  saveCBToSheets();
   // Update check-all state
   const allVisible=window._currentFilteredData||[];
   const allChecked=allVisible.every(d=>checkedIds.has(d.noEvopay));
@@ -1703,6 +1705,88 @@ function saveThresholds(){
 }
 
 // ═══════════════════════════════════════════
+// SHEETS INTEGRATION
+// ═══════════════════════════════════════════
+function showToast(msg,type='info'){
+  let t=document.getElementById('moflex-toast');
+  if(!t){t=document.createElement('div');t.id='moflex-toast';
+    t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 18px;border-radius:8px;font-size:12px;font-family:\'DM Mono\',monospace;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity .3s;display:none';
+    document.body.appendChild(t);}
+  const colors={success:'background:#f0fdf4;color:#16a34a;border:1px solid #86efac',error:'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5',info:'background:#eeeeff;color:#0000cc;border:1px solid #aaaaff'};
+  t.style.cssText+=';'+colors[type];t.textContent=msg;t.style.display='block';t.style.opacity='1';
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>{t.style.display='none';},300);},3000);
+}
+
+async function loadFromSheets(){
+  if(!MOFLEX_API_URL)return;
+  showToast('Memuat data dari Google Sheets...','info');
+  try{
+    const res=await apiCall('loadAll');
+    if(!res.ok){showToast('Gagal load: '+res.message,'error');return;}
+    // Cash balance
+    if(res.cashBalance&&res.cashBalance.length){
+      res.cashBalance.forEach((slot,i)=>{
+        if(i<4){
+          cashBalance[i]={bank:slot.bank||'',val:parseFloat(slot.val)||0};
+          document.getElementById('cb-bank-'+i).value=slot.bank||'';
+          document.getElementById('cb-val-'+i).value=slot.val>0?parseFloat(slot.val).toLocaleString('id-ID'):'';
+        }
+      });
+      renderCBSummary();updateCBStrip();updateTransferPreview();
+    }
+    // Peng data
+    if(res.pengData&&res.pengData.length){
+      const headers=Object.keys(res.pengData[0]);
+      rawPengRows=[headers,...res.pengData.map(r=>Object.values(r))];
+      rawPengHeaderIdx=0;
+      const colMap=detectColumnMap(headers);
+      pengData=res.pengData.map(r=>processPengRow(Object.values(r),colMap));
+      setNominalMax(pengData);setTotalPeng();
+      pengData=pengData.map(d=>({...d,...calcScore(d)}));
+      renderPengTable();renderDashboard();updateHutangStrip();
+    }
+    // AP Mobil
+    if(res.apData&&res.apData.length){
+      hutangData=res.apData.map(r=>{
+        const v=Object.values(r);
+        const noFaktur=(v[0]||'').trim(),tglFaktur=(v[1]||'').trim(),tglJth=(v[2]||'').trim();
+        const tagihan=parseNominal(v[3]),jumlahBayar=parseNominal(v[4]);
+        const isUnit=/^N\d/i.test(noFaktur);
+        const dl=tglJth?daysDiff(tglJth):null;
+        const agingDays=dl!==null?-dl:0;
+        return recalcHutangBunga({noFaktur,tglFaktur,tglJth,tagihan,jumlahBayar,isUnit,agingDays});
+      });
+      renderHutangMetrics();renderHutangTable();renderHutangCharts();updateHutangStrip();
+    }
+    showToast('Data berhasil dimuat ✅','success');
+  }catch(err){showToast('Error: '+err,'error');}
+}
+
+async function savePengToSheets(fileName){
+  if(!MOFLEX_API_URL)return;
+  const hIdx=rawPengHeaderIdx;
+  const headers=rawPengRows[hIdx]||[];
+  const rows=rawPengRows.slice(hIdx+1);
+  const res=await apiCall('savePengData',{headers,rows,fileName,uploadBy:'analyst'});
+  if(res.ok)showToast('Data tersimpan ke Sheets ✅','success');
+  else showToast('Gagal simpan: '+res.message,'error');
+}
+
+async function saveAPToSheets(fileName,rows,headers){
+  if(!MOFLEX_API_URL)return;
+  await apiCall('saveAPMobil',{headers,rows,fileName,tafRate:(parseFloat(document.getElementById('taf-rate').value)||7.75),uploadBy:'analyst'});
+}
+
+async function saveCBToSheets(){
+  if(!MOFLEX_API_URL)return;
+  await apiCall('saveCashBalance',{slots:cashBalance,updatedBy:'analyst'});
+}
+
+async function syncExecuteToSheets(executedIdsArr,totalAmount){
+  if(!MOFLEX_API_URL)return;
+  await apiCall('executePayment',{executedIds:executedIdsArr,totalAmount,slots:cashBalance,updatedBy:'analyst'});
+}  
+// ═══════════════════════════════════════════
 // DEMO
 // ═══════════════════════════════════════════
   function setApiUrl(url){
@@ -1750,6 +1834,7 @@ document.getElementById('w-bucket').value=weights.bucket||15;
 document.getElementById('t-red').value=thresholds.red||70;
 document.getElementById('t-yellow').value=thresholds.yellow||40;
 updateWeightDisplay(); updateThresholdDisplay();
+if(MOFLEX_API_URL) loadFromSheets();
 function handleLogout(event) {
   // 1. Mencegah link lompat acak sebelum data dibersihkan
   event.preventDefault(); 
